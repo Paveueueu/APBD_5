@@ -37,7 +37,8 @@ public class EmpDeptSalgradeTests
         var depts = Database.GetDepts();
         
         List<Emp> result = emps.Where(e => e.DeptNo == depts.First(d => d.Loc == "CHICAGO").DeptNo).ToList(); 
-
+        
+        Assert.Equal(2, result.Count);
         Assert.All(result, e => Assert.Equal(30, e.DeptNo));
     }
 
@@ -70,8 +71,9 @@ public class EmpDeptSalgradeTests
             emp => emp.DeptNo, 
             dept => dept.DeptNo,
             (emp, dept) => new { dept.DName, emp.EName }
-        ); 
-
+        ).ToList(); 
+        
+        Assert.Equal(5, result.Count);
         Assert.Contains(result, r => r.DName == "SALES" && r.EName == "ALLEN");
     }
 
@@ -84,9 +86,12 @@ public class EmpDeptSalgradeTests
 
         var result = emps
             .GroupBy(emp => emp.DeptNo)
-            .Select(e => new { DeptNo = e.Key, Count = e.Count() });
+            .Select(e => new { DeptNo = e.Key, Count = e.Count() })
+            .ToList();
         
         Assert.Contains(result, g => g.DeptNo == 30 && g.Count == 2);
+        Assert.Contains(result, g => g.DeptNo == 10 && g.Count == 2);
+        Assert.Contains(result, g => g.DeptNo == 20 && g.Count == 1);
     }
 
     // 7. SelectMany (simulate flattening)
@@ -113,10 +118,12 @@ public class EmpDeptSalgradeTests
             .SelectMany(emp => grades
                 .Where(grade => emp.Sal >= grade.Losal && emp.Sal <= grade.Hisal)
                 .Select(grade => new { emp.EName, grade.Grade })
-            );
+            ).ToList();
             
         
         Assert.Contains(result, r => r.EName == "ALLEN" && r.Grade == 3);
+        Assert.Contains(result, r => r.EName == "SMITH" && r.Grade == 1);
+        Assert.Contains(result, r => r.EName == "KING" && r.Grade == 5);
     }
 
     // 9. Aggregation (AVG)
@@ -128,7 +135,8 @@ public class EmpDeptSalgradeTests
         
         var result = emps
             .GroupBy(emp => emp.DeptNo)
-            .Select(e => new { DeptNo = e.Key, AvgSal = e.Average(emp => emp.Sal) });
+            .Select(e => new { DeptNo = e.Key, AvgSal = e.Average(emp => emp.Sal) })
+            .ToList();
         
         Assert.Contains(result, r => r.DeptNo == 30 && r.AvgSal > 1000);
     }
